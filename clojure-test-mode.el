@@ -51,12 +51,12 @@
 ;; files that correspond to their namespace. It should also have a
 ;; test/ directory containing files that correspond to their
 ;; namespace, and the test namespaces should mirror the implementation
-;; namespaces with the addition of "test" as the second-to-last
-;; segment of the namespace.
+;; namespaces with the addition of `clojure-test-postfix' to the last
+;; segment of namespace.
 
 ;; So my.project.frob would be found in src/my/project/frob.clj and
-;; its tests would be in test/my/project/test/frob.clj in the
-;; my.project.test.frob namespace.
+;; its tests would be in test/my/project/frob_test.clj in the
+;; my.project.frob-test namespace.
 
 ;;; History:
 
@@ -88,6 +88,12 @@
 (require 'slime)
 (require 'swank-clojure)
 (require 'which-func)
+
+(defcustom clojure-test-postfix "_test"
+  "   This value is used by `clojure-test-implementation-for'
+   and `clojure-test-test-for'."
+  :type 'string
+  :group 'clojure-test-mode)
 
 ;; Faces
 
@@ -222,15 +228,17 @@ Retuns the problem overlay if such a position is found, otherwise nil."
 
 (defun clojure-test-implementation-for (namespace)
   (let* ((segments (clojure-test-namespace-to-path namespace))
-         (common-segments (butlast segments 2))
-         (impl-segments (append common-segments (last segments))))
+         (common-segments (butlast segments))
+         (impl-name (replace-regexp-in-string clojure-test-postfix
+                                              "" (car (last segments))))
+         (impl-segments (append common-segments (list impl-name))))
     (mapconcat 'identity impl-segments "/")))
 
 (defun clojure-test-test-for (namespace)
   (let* ((segments (clojure-test-namespace-to-path namespace))
          (common-segments (butlast segments))
-         (test-segments (append common-segments '("test")))
-         (test-segments (append test-segments (last segments))))
+         (test-name (concat (car (last segments)) clojure-test-postfix))
+         (test-segments (append common-segments (list test-name))))
     (mapconcat 'identity test-segments "/")))
 
 ;; Commands
