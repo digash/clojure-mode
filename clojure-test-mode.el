@@ -123,7 +123,7 @@
 
 (defun clojure-test-eval (string &optional handler)
   (slime-eval-async `(swank:eval-and-grab-output ,string)
-                    (or handler #'identity)))
+    (or handler #'identity)))
 
 (defun clojure-test-eval-sync (string)
   (slime-eval `(swank:eval-and-grab-output ,string)))
@@ -174,7 +174,7 @@
             (incf clojure-test-error-count)
             (clojure-test-highlight-problem line event actual)))))))
 
-	
+
 (defun clojure-test-highlight-problem (line event message)
   (save-excursion
     (goto-line line)
@@ -191,29 +191,29 @@
   "Go to the next position with an overlay message.
 Retuns the problem overlay if such a position is found, otherwise nil."
   (let ((current-overlays (overlays-at here))
-	(next-overlays (next-overlay-change here)))
+        (next-overlays (next-overlay-change here)))
     (while (and (not (equal next-overlays (point-max)))
-		(or
-		 (not (overlays-at next-overlays))
-		 (equal (overlays-at next-overlays)
-			current-overlays)))
+                (or
+                 (not (overlays-at next-overlays))
+                 (equal (overlays-at next-overlays)
+                        current-overlays)))
       (setq next-overlays (next-overlay-change next-overlays)))
     (if (not (equal next-overlays (point-max)))
-	(overlay-start (car (overlays-at next-overlays))))))
+        (overlay-start (car (overlays-at next-overlays))))))
 
 (defun clojure-test-find-previous-problem (here)
   "Go to the next position with the `clojure-test-problem' text property.
 Retuns the problem overlay if such a position is found, otherwise nil."
   (let ((current-overlays (overlays-at here))
-	(previous-overlays (previous-overlay-change here)))
+        (previous-overlays (previous-overlay-change here)))
     (while (and (not (equal previous-overlays (point-min)))
-		(or
-		 (not (overlays-at previous-overlays))
-		 (equal (overlays-at previous-overlays)
-			current-overlays)))
+                (or
+                 (not (overlays-at previous-overlays))
+                 (equal (overlays-at previous-overlays)
+                        current-overlays)))
       (setq previous-overlays (previous-overlay-change previous-overlays)))
     (if (not (equal previous-overlays (point-min)))
-	(overlay-start (car (overlays-at previous-overlays))))))
+        (overlay-start (car (overlays-at previous-overlays))))))
 
 ;; File navigation
 
@@ -245,7 +245,7 @@ Retuns the problem overlay if such a position is found, otherwise nil."
                           ;; clojure-test-eval will wrap in with-out-str
                           (slime-eval-async `(swank:interactive-eval
                                               "(clojure.test/run-tests)")
-                                            #'clojure-test-get-results))))))
+                            #'clojure-test-get-results))))))
 
 (defun clojure-test-run-test ()
   "Run the test at point."
@@ -254,17 +254,17 @@ Retuns the problem overlay if such a position is found, otherwise nil."
   (clojure-test-clear
    (lambda (&rest args)
      (let* ((f (which-function))
-	    (test-name (if (listp f) (first f) f)))
+            (test-name (if (listp f) (first f) f)))
        (slime-eval-async
-        `(swank:interactive-eval
-          ,(format "(do (load-file \"%s\")
+           `(swank:interactive-eval
+             ,(format "(do (load-file \"%s\")
                       (when (:test (meta (var %s))) (%s) (cons (:name (meta (var %s))) (:status (meta (var %s))))))"
-                   (buffer-file-name) test-name test-name test-name test-name))
-        (lambda (result-str)
-          (let ((result (read result-str)))
-            (if (cdr result)
-		(clojure-test-extract-result result)
-              (message "Not in a test.")))))))))
+                      (buffer-file-name) test-name test-name test-name test-name))
+         (lambda (result-str)
+           (let ((result (read result-str)))
+             (if (cdr result)
+                 (clojure-test-extract-result result)
+               (message "Not in a test.")))))))))
 
 (defun clojure-test-show-result ()
   "Show the result of the test under point."
@@ -293,7 +293,7 @@ Retuns the problem overlay if such a position is found, otherwise nil."
   "Go to and describe the next test problem in the buffer."
   (interactive)
   (let* ((here (point))
-	 (problem (clojure-test-find-next-problem here)))
+         (problem (clojure-test-find-next-problem here)))
     (if problem
         (goto-char problem)
       (goto-char here)
@@ -303,7 +303,7 @@ Retuns the problem overlay if such a position is found, otherwise nil."
   "Go to and describe the previous compiler problem in the buffer."
   (interactive)
   (let* ((here (point))
-	 (problem (clojure-test-find-previous-problem here)))
+         (problem (clojure-test-find-previous-problem here)))
     (if problem
         (goto-char problem)
       (goto-char here)
