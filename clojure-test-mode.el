@@ -217,14 +217,17 @@ Retuns the problem overlay if such a position is found, otherwise nil."
 
 ;; File navigation
 
+(defun clojure-test-namespace-to-path (namespace)
+  (split-string (replace-regexp-in-string "-" "_" namespace) "\\."))
+
 (defun clojure-test-implementation-for (namespace)
-  (let* ((segments (split-string namespace "\\."))
+  (let* ((segments (clojure-test-namespace-to-path namespace))
          (common-segments (butlast segments 2))
          (impl-segments (append common-segments (last segments))))
     (mapconcat 'identity impl-segments "/")))
 
 (defun clojure-test-test-for (namespace)
-  (let* ((segments (split-string namespace "\\."))
+  (let* ((segments (clojure-test-namespace-to-path namespace))
          (common-segments (butlast segments))
          (test-segments (append common-segments '("test")))
          (test-segments (append test-segments (last segments))))
