@@ -320,22 +320,36 @@ Retuns the problem overlay if such a position is found, otherwise nil."
       (goto-char here)
       (message "No previous problem."))))
 
+(defun clojure-test-maven-project-root ()
+  "Find current maven project root."
+  (when (functionp 'locate-dominating-file)
+    (locate-dominating-file default-directory "pom.xml")))
 
-
+(defun clojure-test-project-root ()
+  "Find current project root."
+  (if (functionp 'locate-dominating-file)
+      (locate-dominating-file default-directory "src")
+    default-directory))
 
 (defun clojure-test-jump-to-implementation ()
   "Jump from test file to implementation."
   (interactive)
-  (find-file (format "%s/src/%s.clj"
-                     (locate-dominating-file buffer-file-name "src/")
-                     (clojure-test-implementation-for (slime-current-package)))))
+  (let ((maven-project-root (clojure-test-maven-project-root))
+        (impl-file (clojure-test-implementation-for (slime-current-package))))
+    (find-file
+     (if maven-project-root
+         (format "%s/src/main/clojure/%s.clj" maven-project-root impl-file)
+       (format "%s/src/%s.clj" (clojure-test-project-root) impl-file)))))
 
 (defun clojure-test-jump-to-test ()
   "Jump from implementation file to test."
   (interactive)
-  (find-file (format "%s/test/%s.clj"
-                     (locate-dominating-file buffer-file-name "src/")
-                     (clojure-test-test-for (slime-current-package)))))
+  (let ((maven-project-root (clojure-test-maven-project-root))
+        (test-file (clojure-test-test-for (slime-current-package))))
+    (find-file
+     (if maven-project-root
+         (format "%s/src/test/clojure/%s.clj" maven-project-root test-file)
+       (format "%s/test/%s.clj" (clojure-test-project-root) test-file)))))
 
 (defvar clojure-test-mode-map
   (let ((map (make-sparse-keymap)))
