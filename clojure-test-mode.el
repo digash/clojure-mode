@@ -1,12 +1,12 @@
 ;;; clojure-test-mode.el --- Minor mode for Clojure tests
 
-;; Copyright (C) 2009 Phil Hagelberg
+;; Copyright (C) 2009-2010 Phil Hagelberg
 
 ;; Author: Phil Hagelberg <technomancy@gmail.com>
 ;; URL: http://emacswiki.org/cgi-bin/wiki/ClojureTestMode
-;; Version: 1.3
-;; Keywords: languages, lisp
-;; Package-Requires: ((swank-clojure "1.0"))
+;; Version: 1.4
+;; Keywords: languages, lisp, test
+;; Package-Requires: ((slime "20091016") (clojure-mode "1.7"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -73,9 +73,15 @@
 ;;  * Update to use clojure.test instead of clojure.contrib.test-is.
 ;;  * Fix bug suppressing test report output in repl.
 
+;; 1.4: 2010-05-13
+;;  * Fix jump-to-test
+;;  * Update to work with Clojure 1.2.
+;;  * Added next/prev problem.
+;;  * Depend upon slime, not swank-clojure.
+;;  * Don't move the mark when activating.
+
 ;;; TODO:
 
-;; * Wrap enabling of slime in save-window-excursion
 ;; * Implement next-problem command
 ;; * Error messages need line number.
 ;; * Currently show-message needs point to be on the line with the
@@ -86,7 +92,6 @@
 (require 'clojure-mode)
 (require 'cl)
 (require 'slime)
-(require 'swank-clojure)
 (require 'which-func)
 
 (defcustom clojure-test-postfix "_test"
@@ -223,19 +228,19 @@ Retuns the problem overlay if such a position is found, otherwise nil."
 
 ;; File navigation
 
-(defun clojure-test-namespace-to-path (namespace)
-  (split-string (replace-regexp-in-string "-" "_" namespace) "\\."))
+(defun clojure-test-underscores-for-hyphens (namespace)
+  (replace-regexp-in-string "-" "_" namespace))
 
 (defun clojure-test-implementation-for (namespace)
-  (let* ((segments (clojure-test-namespace-to-path namespace))
-         (common-segments (butlast segments))
-         (impl-name (replace-regexp-in-string clojure-test-postfix
-                                              "" (car (last segments))))
-         (impl-segments (append common-segments (list impl-name))))
+  (let* ((namespace (clojure-test-underscores-for-hyphens namespace))
+         (segments (split-string namespace "\\."))
+         (common-segments (butlast segments 2))
+         (impl-segments (append common-segments (last segments))))
     (mapconcat 'identity impl-segments "/")))
 
 (defun clojure-test-test-for (namespace)
-  (let* ((segments (clojure-test-namespace-to-path namespace))
+  (let* ((namespace (clojure-test-underscores-for-hyphens namespace))
+         (segments (split-string namespace "\\."))
          (common-segments (butlast segments))
          (test-name (concat (car (last segments)) clojure-test-postfix))
          (test-segments (append common-segments (list test-name))))
@@ -382,11 +387,10 @@ Retuns the problem overlay if such a position is found, otherwise nil."
     "Enable clojure-test-mode if the current buffer contains Clojure tests.
 Also will enable it if the file is in a test directory."
     (save-excursion
-      (goto-char (point-min))
-      (if (or (search-forward "(deftest" nil t)
-              (search-forward "(with-test" nil t)
-              (string-match "/test/$" default-directory))
-          (clojure-test-mode t))))
+      (save-window-excursion
+        (goto-char (point-min))
+        (when (search-forward "clojure.test" nil t)
+            (clojure-test-mode t)))))
   (add-hook 'clojure-mode-hook 'clojure-test-maybe-enable))
 
 (provide 'clojure-test-mode)

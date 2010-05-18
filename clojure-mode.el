@@ -1,12 +1,12 @@
 ;;; clojure-mode.el --- Major mode for Clojure code
 
-;; Copyright (C) 2007, 2008, 2009 Jeffrey Chu, Lennart Staflin, Phil Hagelberg
+;; Copyright (C) 2007-2010 Jeffrey Chu, Lennart Staflin, Phil Hagelberg
 ;;
 ;; Authors: Jeffrey Chu <jochu0@gmail.com>
 ;;          Lennart Staflin <lenst@lysator.liu.se>
 ;;          Phil Hagelberg <technomancy@gmail.com>
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/ClojureMode
-;; Version: 1.7
+;; Version: 1.7.1
 ;; Keywords: languages, lisp
 
 ;; This file is not part of GNU Emacs.
@@ -691,7 +691,8 @@ check for contextual indenting."
 
   ;; contrib
   (handler-case 1)
-  (handle 1))
+  (handle 1)
+  (dotrace 1))
 
 
 
