@@ -228,23 +228,13 @@ Retuns the problem overlay if such a position is found, otherwise nil."
 
 ;; File navigation
 
-(defun clojure-test-underscores-for-hyphens (namespace)
-  (replace-regexp-in-string "-" "_" namespace))
-
 (defun clojure-test-implementation-for (namespace)
-  (let* ((namespace (clojure-test-underscores-for-hyphens namespace))
+  (let* ((namespace (clojure-underscores-for-hyphens namespace))
          (segments (split-string namespace "\\."))
-         (common-segments (butlast segments 2))
-         (impl-segments (append common-segments (last segments))))
+         (before (subseq segments 0 clojure-test-ns-segment-position))
+         (after (subseq segments (1+ clojure-test-ns-segment-position)))
+         (impl-segments (append before after)))
     (mapconcat 'identity impl-segments "/")))
-
-(defun clojure-test-test-for (namespace)
-  (let* ((namespace (clojure-test-underscores-for-hyphens namespace))
-         (segments (split-string namespace "\\."))
-         (common-segments (butlast segments))
-         (test-name (concat (car (last segments)) clojure-test-postfix))
-         (test-segments (append common-segments (list test-name))))
-    (mapconcat 'identity test-segments "/")))
 
 ;; Commands
 
@@ -304,7 +294,6 @@ Retuns the problem overlay if such a position is found, otherwise nil."
       (alter-meta! t assoc :test nil))"
    callback))
 
-
 (defun clojure-test-next-problem ()
   "Go to and describe the next test problem in the buffer."
   (interactive)
@@ -325,36 +314,12 @@ Retuns the problem overlay if such a position is found, otherwise nil."
       (goto-char here)
       (message "No previous problem."))))
 
-(defun clojure-test-maven-project-root ()
-  "Find current maven project root."
-  (when (functionp 'locate-dominating-file)
-    (locate-dominating-file default-directory "pom.xml")))
-
-(defun clojure-test-project-root ()
-  "Find current project root."
-  (if (functionp 'locate-dominating-file)
-      (locate-dominating-file default-directory "src")
-    default-directory))
-
 (defun clojure-test-jump-to-implementation ()
   "Jump from test file to implementation."
   (interactive)
-  (let ((maven-project-root (clojure-test-maven-project-root))
-        (impl-file (clojure-test-implementation-for (slime-current-package))))
-    (find-file
-     (if maven-project-root
-         (format "%s/src/main/clojure/%s.clj" maven-project-root impl-file)
-       (format "%s/src/%s.clj" (clojure-test-project-root) impl-file)))))
-
-(defun clojure-test-jump-to-test ()
-  "Jump from implementation file to test."
-  (interactive)
-  (let ((maven-project-root (clojure-test-maven-project-root))
-        (test-file (clojure-test-test-for (slime-current-package))))
-    (find-file
-     (if maven-project-root
-         (format "%s/src/test/clojure/%s.clj" maven-project-root test-file)
-       (format "%s/test/%s.clj" (clojure-test-project-root) test-file)))))
+  (find-file (format "%s/src/%s.clj"
+                     (locate-dominating-file buffer-file-name "src/")
+                     (clojure-test-implementation-for (clojure-find-package)))))
 
 (defvar clojure-test-mode-map
   (let ((map (make-sparse-keymap)))
@@ -369,8 +334,6 @@ Retuns the problem overlay if such a position is found, otherwise nil."
     (define-key map (kbd "M-n")     'clojure-test-next-problem)
     map)
   "Keymap for Clojure test mode.")
-
-(define-key clojure-mode-map (kbd "C-c t") 'clojure-test-jump-to-test)
 
 ;;;###autoload
 (define-minor-mode clojure-test-mode
