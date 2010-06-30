@@ -146,6 +146,16 @@ numbers count from the end:
   leiningen.compile -> leiningen.test.compile (uses 1)
   clojure.http.client -> clojure.http.test.client (uses -1)")
 
+
+(defvar clojure-test-relative-test-package-path "test"
+  "Directory where all the test packages are located, relative to
+  the src directory.
+
+Customize this depending on your project's conventions.
+
+  leiningen convention -> \"test\" default
+  maven convention -> \"src/test/clojure\"")
+
 ;;;###autoload
 (defun clojure-mode ()
   "Major mode for editing Clojure code - similar to Lisp mode..
@@ -747,8 +757,9 @@ check for contextual indenting."
 (defun clojure-jump-to-test ()
   "Jump from implementation file to test."
   (interactive)
-  (find-file (format "%s/test/%s.clj"
+  (find-file (format "%s/%s/%s.clj"
                      (locate-dominating-file buffer-file-name "src/")
+                     clojure-test-relative-test-package-path
                      (clojure-test-for (clojure-find-package)))))
 
 ;;;###autoload
