@@ -322,15 +322,17 @@ elements of a def* forms."
                 (regexp-opt '("defn" "defn-" "def" "def-" "defonce"
                               "defmulti" "defmethod" "defmacro"
                               "defstruct" "deftype" "defprotocol"
-                              "defrecord" "defvar" "defunbound"
-                              "defalias" "defhinted"
-                              "defnk" "defn-memo"))
+                              "defrecord"
+                              "defalias" "defhinted" "defmacro-"
+                              "defn-memo" "defnk" "defonce-"
+                              "defstruct-" "defunbound" "defunbound-"
+                              "defvar" "defvar-"))
                 ;; Function declarations.
                 "\\)\\>"
                 ;; Any whitespace
                 "[ \r\n\t]*"
                 ;; Possibly type or metadata
-                "\\(?:#^\\(?:{[^}]*}\\|\\sw+\\)[ \r\n\t]*\\)?"
+                "\\(?:#?^\\(?:{[^}]*}\\|\\sw+\\)[ \r\n\t]*\\)?"
 
                 "\\(\\sw+\\)?")
        (1 font-lock-keyword-face)
@@ -472,7 +474,7 @@ elements of a def* forms."
       ;; (fn name? args ...)
       (,(concat "(\\(?:clojure.core/\\)?\\(fn\\)[ \t]+"
                 ;; Possibly type
-                "\\(?:#^\\sw+[ \t]*\\)?"
+                "\\(?:#?^\\sw+[ \t]*\\)?"
                 ;; Possibly name
                 "\\(\\sw+\\)?" )
        (1 font-lock-keyword-face)
@@ -520,7 +522,7 @@ elements of a def* forms."
       ;; Constant values (keywords).
       ("\\<:\\(\\sw\\|#\\)+\\>" 0 font-lock-builtin-face)
       ;; Meta type annotation #^Type
-      ("#^\\sw+" 0 font-lock-type-face)
+      ("#?^\\sw+" 0 font-lock-type-face)
       ("\\<io\\!\\>" 0 font-lock-warning-face)))
   "Default expressions to highlight in Clojure mode.")
 
@@ -529,6 +531,19 @@ elements of a def* forms."
 (put 'defn- 'clojure-doc-string-elt 2)
 (put 'defmulti 'clojure-doc-string-elt 2)
 (put 'defmacro 'clojure-doc-string-elt 2)
+(put 'definline 'clojure-doc-string-elt 2)
+(put 'defprotocol 'clojure-doc-string-elt 2)
+
+;; Docstring positions - contrib
+(put 'defalias 'clojure-doc-string-elt 3)
+(put 'defmacro- 'clojure-doc-string-elt 2)
+(put 'defn-memo 'clojure-doc-string-elt 2)
+(put 'defnk 'clojure-doc-string-elt 2)
+(put 'defonce- 'clojure-doc-string-elt 3)
+(put 'defunbound 'clojure-doc-string-elt 2)
+(put 'defunbound- 'clojure-doc-string-elt 2)
+(put 'defvar 'clojure-doc-string-elt 3)
+(put 'defvar- 'clojure-doc-string-elt 3)
 
 
 
@@ -649,6 +664,12 @@ check for contextual indenting."
 (put 'implement 'clojure-backtracking-indent '(4 (2)))
 (put 'letfn 'clojure-backtracking-indent '((2) 2))
 (put 'proxy 'clojure-backtracking-indent '(4 4 (2)))
+(put 'reify 'clojure-backtracking-indent '((2)))
+(put 'deftype 'clojure-backtracking-indent '(4 4 (2)))
+(put 'defrecord 'clojure-backtracking-indent '(4 4 (2)))
+(put 'defprotocol 'clojure-backtracking-indent '(4 (2)))
+(put 'extend-type 'clojure-backtracking-indent '(4 (2)))
+(put 'extend-protocol 'clojure-backtracking-indent '(4 (2)))
 
 (defun put-clojure-indent (sym indent)
   (put sym 'clojure-indent-function indent))
@@ -662,6 +683,7 @@ check for contextual indenting."
   ;; built-ins
   (ns 1)
   (fn 'defun)
+  (def 'defun)
   (defn 'defun)
   (if 1)
   (if-not 1)
@@ -669,7 +691,9 @@ check for contextual indenting."
   (when 1)
   (while 1)
   (when-not 1)
+  (when-first 1)
   (do 0)
+  (future 0)
   (comment 0)
   (doto 1)
   (locking 1)
@@ -677,9 +701,11 @@ check for contextual indenting."
   (with-open 1)
   (with-precision 1)
   (with-local-vars 1)
-  (deftype 'defun)
-  (defrecord 'defun)
-  (defprotocol 'defun)
+
+  (reify 'defun)
+  (deftype 2)
+  (defrecord 2)
+  (defprotocol 1)
   (extend 1)
   (extend-protocol 1)
   (extend-type 1)
