@@ -6,7 +6,7 @@
 ;;          Lennart Staflin <lenst@lysator.liu.se>
 ;;          Phil Hagelberg <technomancy@gmail.com>
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/ClojureMode
-;; Version: 1.7.1
+;; Version: 1.8.0
 ;; Keywords: languages, lisp
 
 ;; This file is not part of GNU Emacs.
@@ -16,25 +16,21 @@
 ;; Provides font-lock, indentation, and navigation for the Clojure
 ;; language. (http://clojure.org)
 
-;;; Installation:
-
-;; If you use ELPA (http://tromey.com/elpa), you can install via the
-;; M-x package-list-packages interface. This is preferrable as you
-;; will have access to updates automatically.
-
-;; If you need to install by hand for some reason:
-
-;; (0) Add this file to your load-path, usually the ~/.emacs.d directory.
-;; (1) Either:
-;;     Add this to your .emacs config: (require 'clojure-mode)
-;;     Or generate autoloads with the `update-directory-autoloads' function.
-
 ;; See also the swank-clojure package for better interaction with
-;; Clojure subprocesses. Note that M-x clojure-install functionality
-;; has been moved to that package and is deprecated here.
+;; Clojure subprocesses.
 
 ;; Users of older Emacs (pre-22) should get version 1.4:
 ;; http://github.com/technomancy/clojure-mode/tree/1.4
+
+;; Install using package.el. You will need to add repo.technomancy.us
+;; to your archive list:
+
+;; (add-to-list 'package-archives "http://repo.technomancy.us/emacs")
+
+;; If you use a version of Emacs prior to 24 that doesn't include
+;; package.el, you can get it from http://bit.ly/pkg-el. If you have
+;; an older package.el installed from tromey.com, you should upgrade
+;; in order to support installation from multiple sources.
 
 ;; Paredit users:
 
@@ -88,7 +84,7 @@ Clojure to load that file."
   :type 'string
   :group 'clojure-mode)
 
-(defcustom clojure-mode-use-backtracking-indent nil
+(defcustom clojure-mode-use-backtracking-indent t
   "Set to non-nil to enable backtracking/context sensitive indentation."
   :type 'boolean
   :group 'clojure-mode)
@@ -115,7 +111,9 @@ Clojure to load that file."
 (defvar clojure-mode-syntax-table
   (let ((table (copy-syntax-table emacs-lisp-mode-syntax-table)))
     (modify-syntax-entry ?~ "'   " table)
-    (modify-syntax-entry ?, "    " table)
+    ;; can't safely make commas whitespace since it will apply even
+    ;; inside string literals--ick!
+    ;; (modify-syntax-entry ?, "    " table)
     (modify-syntax-entry ?\{ "(}" table)
     (modify-syntax-entry ?\} "){" table)
     (modify-syntax-entry ?\[ "(]" table)
@@ -134,7 +132,7 @@ Clojure to load that file."
 This holds a cons cell of the form `(DIRECTORY . FILE)'
 describing the last `clojure-load-file' or `clojure-compile-file' command.")
 
-(defvar clojure-def-regexp "^\\s *\\((def\\S *\\s +\\(\[^ \n\t\]+\\)\\)"
+(defvar clojure-def-regexp "^\\s *(def\\S *\\s +\\(?:\\^\\S +\\s +\\)?\\([^ \n\t]+\\)"
   "A regular expression to match any top-level definitions.")
 
 (defvar clojure-test-ns-segment-position -1
@@ -184,12 +182,9 @@ if that value is non-nil."
        'clojure-indent-function)
   (set (make-local-variable 'lisp-doc-string-elt-property)
        'clojure-doc-string-elt)
-
-  (setq lisp-imenu-generic-expression
-        `((nil ,clojure-def-regexp 2)))
   (setq imenu-create-index-function
         (lambda ()
-          (imenu--generic-function lisp-imenu-generic-expression)))
+          (imenu--generic-function `((nil ,clojure-def-regexp 1)))))
 
   (clojure-mode-font-lock-setup)
 
@@ -332,8 +327,7 @@ elements of a def* forms."
                 ;; Any whitespace
                 "[ \r\n\t]*"
                 ;; Possibly type or metadata
-                "\\(?:#?^\\(?:{[^}]*}\\|\\sw+\\)[ \r\n\t]*\\)?"
-
+                "\\(?:#?^\\(?:{[^}]*}\\|\\sw+\\)[ \r\n\t]*\\)*"
                 "\\(\\sw+\\)?")
        (1 font-lock-keyword-face)
        (2 font-lock-function-name-face nil t))
@@ -483,20 +477,20 @@ elements of a def* forms."
       (,(concat
          "(\\(?:\.*/\\)?"
          (regexp-opt
-          '(;clojure.inpsector
+          '(;; clojure.inspector
         "atom?" "collection-tag" "get-child" "get-child-count" "inspect"
         "inspect-table" "inspect-tree" "is-leaf" "list-model" "list-provider"
-        ;clojure.main
+        ;; clojure.main
         "load-script" "main" "repl" "repl-caught" "repl-exception"
         "repl-prompt" "repl-read" "skip-if-eol" "skip-whitespace" "with-bindings"
-        ;clojure.set
+        ;; clojure.set
         "difference" "index" "intersection" "join" "map-invert"
         "project" "rename" "rename-keys" "select" "union"
-        ;clojure.stacktrace
+        ;; clojure.stacktrace
         "e" "print-cause-trace" "print-stack-trace" "print-throwable" "print-trace-element"
-        ;clojure.template
+        ;; clojure.template
         "do-template" "apply-template"
-        ;clojure.test
+        ;; clojure.test
         "*initial-report-counters*" "*load-tests*" "*report-counters*" "*stack-trace-depth*" "*test-out*"
         "*testing-contexts*" "*testing-vars*" "are" "assert-any" "assert-expr"
         "assert-predicate" "compose-fixtures" "deftest" "deftest-" "file-position"
@@ -504,13 +498,13 @@ elements of a def* forms."
         "report" "run-all-tests" "run-tests" "set-test" "successful?"
         "test-all-vars" "test-ns" "test-var" "testing" "testing-contexts-str"
         "testing-vars-str" "try-expr" "use-fixtures" "with-test" "with-test-out"
-        ;clojure.walk
+        ;; clojure.walk
         "keywordize-keys" "macroexpand-all" "postwalk" "postwalk-demo" "postwalk-replace"
         "prewalk" "prewalk-demo" "prewalk-replace" "stringify-keys" "walk"
-        ;clojure.xml
+        ;; clojure.xml
         "*current*" "*sb*" "*stack*" "*state*" "attrs"
         "content" "content-handler" "element" "emit" "emit-element"
-        ;clojure.zip
+        ;; clojure.zip
         "append-child" "branch?" "children" "down" "edit"
         "end?" "insert-child" "insert-left" "insert-right" "left"
         "leftmost" "lefts" "make-node" "next" "node"
@@ -519,11 +513,20 @@ elements of a def* forms."
         ) t)
          "\\>")
        1 font-lock-type-face)
-      ;; Constant values (keywords).
-      ("\\<:\\(\\sw\\|#\\)+\\>" 0 font-lock-builtin-face)
-      ;; Meta type annotation #^Type
+      ;; Constant values (keywords), including as metadata e.g. ^:static
+      ("\\<^?:\\(\\sw\\|#\\)+\\>" 0 font-lock-builtin-face)
+      ;; Meta type annotation #^Type or ^Type
       ("#?^\\sw+" 0 font-lock-type-face)
-      ("\\<io\\!\\>" 0 font-lock-warning-face)))
+      ("\\<io\\!\\>" 0 font-lock-warning-face)
+
+      ;;Java interop highlighting
+      ("\\<\\.[a-z][a-zA-Z0-9]*\\>" 0 font-lock-preprocessor-face) ;; .foo .barBaz .qux01
+      ("\\<[A-Z][a-zA-Z0-9]*/[a-zA-Z0-9/$_]+\\>" 0 font-lock-preprocessor-face) ;; Foo Bar$Baz Qux_
+      ("\\<[a-zA-Z]+\\.[a-zA-Z0-9._]*[A-Z]+[a-zA-Z0-9/.$]*\\>" 0 font-lock-preprocessor-face) ;; Foo/Bar foo.bar.Baz foo.Bar/baz
+      ("[a-z]*[A-Z]+[a-z][a-zA-Z0-9$]*\\>" 0 font-lock-preprocessor-face) ;; fooBar
+      ("\\<[A-Z][a-zA-Z0-9$]*\\.\\>" 0 font-lock-preprocessor-face))) ;; Foo. BarBaz. Qux$Quux. Corge9.
+
+
   "Default expressions to highlight in Clojure mode.")
 
 ;; Docstring positions
@@ -733,12 +736,13 @@ check for contextual indenting."
 
   ;; clojure.test
   (testing 1)
-  (deftest 1)
+  (deftest 'defun)
 
   ;; contrib
   (handler-case 1)
   (handle 1)
-  (dotrace 1))
+  (dotrace 1)
+  (deftrace 'defun))
 
 
 
@@ -795,6 +799,7 @@ check for contextual indenting."
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.clj$" . clojure-mode))
+(add-to-list 'interpreter-mode-alist '("cake" . clojure-mode))
 
 (provide 'clojure-mode)
 ;;; clojure-mode.el ends here
