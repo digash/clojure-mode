@@ -32,16 +32,14 @@
 ;; an older package.el installed from tromey.com, you should upgrade
 ;; in order to support installation from multiple sources.
 
-;; Paredit users:
-
-;; Download paredit v21 or greater
-;;    http://mumble.net/~campbell/emacs/paredit.el
+;; Using clojure-mode with paredit is highly recommended. You will
+;; need version 22 or greater: http://mumble.net/~campbell/emacs/paredit.el
 
 ;; Use paredit as you normally would with any other mode; for instance:
 ;;
 ;;   ;; require or autoload paredit-mode
-;;   (defun lisp-enable-paredit-hook () (paredit-mode 1))
-;;   (add-hook 'clojure-mode-hook 'lisp-enable-paredit-hook)
+;;   (defun turn-on-paredit () (paredit-mode 1))
+;;   (add-hook 'clojure-mode-hook 'turn-on-paredit)
 
 ;;; License:
 
@@ -144,15 +142,9 @@ numbers count from the end:
   leiningen.compile -> leiningen.test.compile (uses 1)
   clojure.http.client -> clojure.http.test.client (uses -1)")
 
-
-(defvar clojure-test-relative-test-package-path "test"
-  "Directory where all the test packages are located, relative to
-  the src directory.
-
-Customize this depending on your project's conventions.
-
-  leiningen convention -> \"test\" default
-  maven convention -> \"src/test/clojure\"")
+(defun clojure-mode-version ()
+  "Currently package.el doesn't support prerelease version numbers."
+  "1.8.1-SNAPSHOT")
 
 ;;;###autoload
 (defun clojure-mode ()
